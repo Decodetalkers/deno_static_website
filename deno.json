@@ -18,7 +18,8 @@
   },
   "lint": {
     "exclude": [
-      "dist"
+      "dist",
+      "static"
     ]
   },
   "compilerOptions": {

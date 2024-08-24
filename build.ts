@@ -12,6 +12,36 @@ ensureDir(distDir);
 const options = { overwrite: true };
 copySync("static", distDir, options);
 
+/**
+ * In-memory store of open WebSockets for
+ * triggering browser refresh.
+ */
+const sockets: Set<WebSocket> = new Set();
+
+/**
+ * Upgrade a request connection to a WebSocket if
+ * the url ends with "/refresh"
+ */
+function refreshMiddleware(req: Request): Response | null {
+  if (req.url.endsWith("/refresh")) {
+    const { response, socket } = Deno.upgradeWebSocket(req);
+
+    // Add the new socket to our in-memory store
+    // of WebSockets.
+    sockets.add(socket);
+
+    // Remove the socket from our in-memory store
+    // when the socket closes.
+    socket.onclose = () => {
+      sockets.delete(socket);
+    };
+
+    return response;
+  }
+
+  return null;
+}
+
 async function esbuild_generate() {
   const esBuildOptions: esbuild.BuildOptions = {
     entryPoints: [
@@ -46,42 +76,54 @@ async function esbuild_generate() {
 
 await esbuild_generate();
 
-let server = Deno.serve({ hostname: "localhost", port: 8000 }, async (ctx) => {
-  return await serveDir(ctx, { fsRoot: `${Deno.cwd()}/dist` });
-});
+async function watch() {
+  let during_wait = false;
 
-const watcher = Deno.watchFs("./");
+  const watcher = Deno.watchFs("./");
 
-let during_wait = false;
-
-for await (const event of watcher) {
-  if (during_wait) {
-    continue;
-  }
-  let has_watched_file = false;
-  if (event.kind != "modify") {
-    continue;
-  }
-  for (const pa of event.paths) {
-    if (
-      pa.includes("./dist") || pa.includes("./build.ts") ||
-      pa.includes(".git") ||
-      (!pa.endsWith("ts") && !pa.endsWith("tsx") && !pa.endsWith("css") &&
-        !pa.endsWith("js") && !pa.endsWith("jsx"))
-    ) {
+  for await (const event of watcher) {
+    if (during_wait) {
       continue;
     }
-    has_watched_file = true;
-    break;
+    if (["any", "access"].includes(event.kind)) {
+      continue;
+    }
+
+    let should_fresh = false;
+
+    for (const pa of event.paths) {
+      if (
+        pa.includes("./dist") || pa.includes("./build.ts") ||
+        pa.includes(".git") ||
+        (!pa.endsWith("ts") && !pa.endsWith("tsx") && !pa.endsWith("css") &&
+          !pa.endsWith("js") && !pa.endsWith("jsx"))
+      ) {
+        continue;
+      }
+      should_fresh = true;
+      break;
+    }
+    if (!should_fresh) {
+      continue;
+    }
+
+    await esbuild_generate();
+    sockets.forEach((socket) => {
+      socket.send("refresh");
+    });
+    during_wait = true;
+    delay(1000).then(() => during_wait = false);
   }
-  if (!has_watched_file) {
-    continue;
-  }
-  server.shutdown();
-  await esbuild_generate();
-  server = Deno.serve({ hostname: "localhost", port: 8000 }, async (ctx) => {
-    return await serveDir(ctx, { fsRoot: `${Deno.cwd()}/dist` });
-  });
-  during_wait = true;
-  delay(1000).then(() => during_wait = false);
 }
+
+Deno.serve({ hostname: "localhost", port: 8000 }, async (req) => {
+  const res = refreshMiddleware(req);
+
+  if (res) {
+    return res;
+  }
+
+  return await serveDir(req, { fsRoot: `${Deno.cwd()}/dist` });
+});
+
+await watch();
