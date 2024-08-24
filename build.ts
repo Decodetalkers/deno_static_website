@@ -3,6 +3,8 @@ import { denoPlugins } from "esbuild_deno_loader";
 import { copySync, ensureDir, existsSync } from "@std/fs";
 import { resolve } from "@std/path";
 
+import { serveDir } from "@std/http";
+
 const distDir = "dist";
 ensureDir(distDir);
 
@@ -38,3 +40,7 @@ esBuildOptions.plugins = [
 ];
 
 await esbuild.build({ ...esBuildOptions });
+
+Deno.serve({ hostname: "localhost", port: 8000 }, async (ctx) => {
+  return await serveDir(ctx, { fsRoot: `${Deno.cwd()}/dist` });
+});
