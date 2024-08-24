@@ -3,7 +3,7 @@
 
   // Construct the WebSocket url from the current
   // page origin.
-  const requestUrl = `${window.location.origin.replace("http", "ws")}/refresh`
+  const requestUrl = `${window.location.origin.replace("http", "ws")}/refresh`;
 
   // Kick off the connection code on load.
   connect();
