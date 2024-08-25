@@ -187,4 +187,4 @@ domElements.forEach((domElement) => {
 
 const styled = styledTmp as Styled;
 
-export default styled;
+export { styled };

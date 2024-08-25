@@ -1,5 +1,5 @@
 {
-  "name": "styled-components-deno",
+  "name": "@nobody/styled-components-deno",
   "version": "0.1.0",
   "tasks": {
     "dev": "deno test --watch mod.ts"
