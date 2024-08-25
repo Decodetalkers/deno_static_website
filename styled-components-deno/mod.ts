@@ -1,3 +1,5 @@
-export function add(a: number, b: number): number {
-  return a + b;
-}
+export * from "./styled.tsx";
+
+import styled from "./styled.tsx";
+
+export default styled;
