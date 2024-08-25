@@ -23,9 +23,8 @@
     ]
   },
   "compilerOptions": {
-    "jsx": "react",
-    "jsxFactory": "h",
-    "jsxFragmentFactory": "Fragment",
+    "jsx": "react-jsx",
+    "jsxImportSource": "npm:preact",
     "lib": [
       "deno.ns",
       "dom",
