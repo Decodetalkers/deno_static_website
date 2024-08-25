@@ -14,10 +14,11 @@ function createElement<T extends keyof JSX.IntrinsicElements>(
     props: JSX.IntrinsicElements[T],
   ) => {
     const { style, children, ...restProps } = props;
+    console.log(style);
 
     let set_style: typeof style = defaultStyle;
-    if (!style) {
-      set_style = defaultStyle;
+    if (style) {
+      set_style = style;
     }
 
     const newProp: Prop = { style: set_style, ...restProps } as Prop;
