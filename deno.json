@@ -14,7 +14,8 @@
     "~/functions/": "./functions/"
   },
   "tasks": {
-    "start": "deno run --allow-net src/main.tsx"
+    "start": "deno run -A build.ts",
+    "release": "deno run -A build.ts --release"
   },
   "lint": {
     "exclude": [

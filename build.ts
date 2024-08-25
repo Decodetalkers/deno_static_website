@@ -6,11 +6,35 @@ import { resolve } from "@std/path";
 import { serveDir } from "@std/http";
 import { delay } from "@std/async";
 
-const distDir = "dist";
+import { parseArgs } from "@std/cli";
+
+interface BuildMode {
+  debug?: boolean;
+  release?: boolean;
+}
+
+const input_args = parseArgs(Deno.args) as BuildMode;
+
+const release_mode = input_args.release;
+
+let sync_asset = "static/debug";
+
+if (release_mode) {
+  sync_asset = "static/release";
+}
+
+let distDir = "dist/debug";
+
+if (release_mode) {
+  distDir = "dist/release";
+}
+
 ensureDir(distDir);
 
+const fsRoot = `${Deno.cwd()}/dist/debug`;
+
 const options = { overwrite: true };
-copySync("static", distDir, options);
+copySync(sync_asset, distDir, options);
 
 /**
  * In-memory store of open WebSockets for
@@ -116,6 +140,10 @@ async function watch() {
   }
 }
 
+if (release_mode) {
+  Deno.exit(0);
+}
+
 Deno.serve({ hostname: "localhost", port: 8000 }, async (req) => {
   const res = refreshMiddleware(req);
 
@@ -123,7 +151,7 @@ Deno.serve({ hostname: "localhost", port: 8000 }, async (req) => {
     return res;
   }
 
-  return await serveDir(req, { fsRoot: `${Deno.cwd()}/dist` });
+  return await serveDir(req, { fsRoot });
 });
 
 await watch();
