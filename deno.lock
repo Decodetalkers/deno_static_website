@@ -3,7 +3,7 @@
   "packages": {
     "specifiers": {
       "jsr:@luca/esbuild-deno-loader@^0.10.3": "jsr:@luca/esbuild-deno-loader@0.10.3",
-      "jsr:@nobody/styled-components-deno@^0.2.0": "jsr:@nobody/styled-components-deno@0.2.0",
+      "jsr:@nobody/styled-components-deno@^0.5.1": "jsr:@nobody/styled-components-deno@0.5.1",
       "jsr:@std/assert@^0.213.1": "jsr:@std/assert@0.213.1",
       "jsr:@std/async@^1.0.3": "jsr:@std/async@1.0.3",
       "jsr:@std/cli@^1.0.3": "jsr:@std/cli@1.0.3",
@@ -22,6 +22,7 @@
       "npm:preact": "npm:preact@10.23.2",
       "npm:preact@10.23.2": "npm:preact@10.23.2",
       "npm:preact@^10.23.2": "npm:preact@10.23.2",
+      "npm:react": "npm:react@18.3.1",
       "npm:react@^18.3.1": "npm:react@18.3.1"
     },
     "jsr": {
@@ -33,8 +34,8 @@
           "jsr:@std/path@0.213"
         ]
       },
-      "@nobody/styled-components-deno@0.2.0": {
-        "integrity": "d987103f6250a37b4e7850797ae04168414bee914b3a7b712d648949dad60980",
+      "@nobody/styled-components-deno@0.5.1": {
+        "integrity": "ad33ee86e932b8b59f9153d8d795f90ebe7dc1e6ccb58c9a07117a9af07d3e78",
         "dependencies": [
           "npm:preact@^10.23.2",
           "npm:react@^18.3.1"
@@ -253,7 +254,7 @@
   "workspace": {
     "dependencies": [
       "jsr:@luca/esbuild-deno-loader@^0.10.3",
-      "jsr:@nobody/styled-components-deno@^0.2.0",
+      "jsr:@nobody/styled-components-deno@^0.5.1",
       "jsr:@std/async@^1.0.3",
       "jsr:@std/cli@^1.0.3",
       "jsr:@std/fs@^1.0.1",

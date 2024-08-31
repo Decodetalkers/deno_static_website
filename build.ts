@@ -33,8 +33,14 @@ ensureDir(distDir);
 
 const fsRoot = `${Deno.cwd()}/dist/debug`;
 
+const base_asserts = `${Deno.cwd()}/static/asserts`;
+const css_asserts = `${Deno.cwd()}/static/styles`;
+
+
 const options = { overwrite: true };
 copySync(sync_asset, distDir, options);
+copySync(base_asserts, `${distDir}/static`, options);
+copySync(css_asserts, `${distDir}/styles`, options);
 
 /**
  * In-memory store of open WebSockets for
@@ -72,7 +78,7 @@ async function esbuild_generate() {
       "./src/main.tsx",
     ],
     jsx: "automatic",
-    jsxImportSource: "npm:react",
+    jsxImportSource: "npm:preact",
     outdir: distDir,
     bundle: true,
     format: "esm",
@@ -120,7 +126,7 @@ async function watch() {
     for (const pa of event.paths) {
       if (
         pa.includes("./dist") || pa.includes("./build.ts") ||
-        pa.includes(".git") ||
+        (pa.endsWith(".git") || pa.includes(".git/")) ||
         (!pa.endsWith("ts") && !pa.endsWith("tsx") && !pa.endsWith("css") &&
           !pa.endsWith("js") && !pa.endsWith("jsx"))
       ) {
