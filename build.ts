@@ -1,12 +1,8 @@
-import * as esbuild from "esbuild";
-import { denoPlugins } from "esbuild_deno_loader";
-import { copySync, ensureDir, existsSync } from "@std/fs";
-import { resolve } from "@std/path";
-
 import { serveDir } from "@std/http";
 import { delay } from "@std/async";
 
 import { parseArgs } from "@std/cli";
+import { GenWebsite, Route, type Script, WebPageUnit } from "@nobody/tananoni";
 
 interface BuildMode {
   debug?: boolean;
@@ -17,30 +13,42 @@ const input_args = parseArgs(Deno.args) as BuildMode;
 
 const release_mode = input_args.release;
 
-let sync_asset = "static/debug";
+let route_path = "debug";
 
 if (release_mode) {
-  sync_asset = "static/release";
+  route_path = "release";
 }
-
-let distDir = "dist/debug";
-
-if (release_mode) {
-  distDir = "dist/release";
-}
-
-ensureDir(distDir);
 
 const fsRoot = `${Deno.cwd()}/dist/debug`;
 
-const base_asserts = `${Deno.cwd()}/static/asserts`;
-const css_asserts = `${Deno.cwd()}/static/styles`;
+const base_asserts = { path: "static/asserts", alias: "static" };
+const css_asserts = { path: "static/styles" };
 
+const scripts: Script[] = [{ src: "main.js" }];
 
-const options = { overwrite: true };
-copySync(sync_asset, distDir, options);
-copySync(base_asserts, `${distDir}/static`, options);
-copySync(css_asserts, `${distDir}/styles`, options);
+if (!release_mode) {
+  scripts.push({ src: "./refresh/client.js" });
+}
+
+const mainroutin = new Route(route_path)
+  .append_assert(base_asserts)
+  .append_assert(css_asserts)
+  .append_webpage(
+    new WebPageUnit(
+      "./src/main.tsx",
+      [{ type: "main", id: "mount" }],
+      scripts,
+    )
+      .with_title("template")
+      .with_linkInfos([
+        { type: "stylesheet", href: "styles/global.css" },
+        { type: "icon", href: "static/favicon.ico" },
+      ]),
+  );
+
+const webgen = new GenWebsite()
+  .withLogLevel("info")
+  .withImportSource("npm:preact");
 
 /**
  * In-memory store of open WebSockets for
@@ -72,41 +80,7 @@ function refreshMiddleware(req: Request): Response | null {
   return null;
 }
 
-async function esbuild_generate() {
-  const esBuildOptions: esbuild.BuildOptions = {
-    entryPoints: [
-      "./src/main.tsx",
-    ],
-    jsx: "automatic",
-    jsxImportSource: "npm:preact",
-    outdir: distDir,
-    bundle: true,
-    format: "esm",
-    logLevel: "verbose",
-    plugins: [],
-  };
-
-  // Build Deno Plugin Options
-  let importMapURL: string | undefined = resolve("./import_map.json");
-
-  if (!existsSync(importMapURL)) {
-    importMapURL = undefined;
-  }
-  const configUrl = resolve("./deno.json");
-
-  esBuildOptions.plugins = [
-    ...denoPlugins(
-      {
-        importMapURL: importMapURL,
-        configPath: configUrl,
-      },
-    ),
-  ];
-
-  await esbuild.build({ ...esBuildOptions });
-}
-
-await esbuild_generate();
+await webgen.generate_website(mainroutin);
 
 async function watch() {
   let during_wait = false;
@@ -139,7 +113,7 @@ async function watch() {
       continue;
     }
 
-    await esbuild_generate();
+    await webgen.generate_website(mainroutin);
     sockets.forEach((socket) => {
       socket.send("refresh");
     });
