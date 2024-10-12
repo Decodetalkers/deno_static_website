@@ -35,7 +35,7 @@ const mainroutin = new Route(route_path)
   .append_assert(css_asserts)
   .append_webpage(
     new WebPageUnit(
-      "./src/main.tsx",
+      "./src-www/main.tsx",
       [{ type: "main", id: "mount" }],
       scripts,
     )
